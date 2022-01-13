@@ -1,0 +1,20 @@
+.privatePage {
+    padding: 5% 35%;
+    overflow-y: auto;
+}
+
+.privatePage span {
+    color: #ff0000;
+    text-transform: capitalize;
+}
+.privatePage .contentWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 300px;
+    padding-top: 1rem;
+}
+
+.privatePage .contentWrapper .buttonSubmit {
+    margin-left: .5rem;
+}

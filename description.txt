@@ -1,0 +1,148 @@
+I am a well known Java developer, author, speaker...
+Working for maildroppa is different to anything you saw before - we work agile,
+we work as a team, we enjoy design and coding :).
+Last year (for maildroppa), I learned React in 4 weeks on my own. In the end - I developed a little component for login by using a useReducer hook.
+So as a little demo of your coding skills, I would ask you to also write me something similar. Make a small prototype of an app with authentication and a private page.
+No API connections or fancy styles needed.
+There should be login/logout buttons. Auth state is managed by Context API, which uses reducer hook, auth token in place.
+- App should consist of 2 routes.
+- One route is public with the login form. Use any credentials for login.
+- The second route is private with random text like “Hi Marcus’
+- Persist auth state (don’t drop auth state on page refresh)
+Code sample:
+import createDataContext from '../../utils/createDataContext';
+import {
+  getTokensFromLocalStorage,
+  setTokensToLocalStorage,
+  removeTokensFromLocalStorage,
+} from './services/localStorage';
+
+const initialState = {
+  user: null,
+  accessToken: null,
+  refreshToken: null,
+  isLoggedIn: false,
+  wizardCompleted: null,
+};
+
+function restoreStateFromLocalStorage(state) {
+  const {accessToken, refreshToken, rememberMe} = getTokensFromLocalStorage();
+  if (accessToken) {
+    return {
+      ...state,
+      accessToken,
+      refreshToken,
+      rememberMe,
+      isLoggedIn: true,
+    };
+  }
+
+  return initialState;
+}
+
+function loginReducer(state, action) {
+  switch (action.type) {
+    case 'login':
+      return {
+        ...state,
+        accessToken: action.payload.accessToken,
+        refreshToken: action.payload.refreshToken,
+        rememberMe: action.payload.rememberMe,
+        isLoggedIn: true,
+      };
+    case 'setAccountData':
+      return {
+        ...state,
+        user: action.payload,
+      };
+    case 'setWizardCompleted': {
+      return {
+        ...state,
+        wizardCompleted: action.payload,
+      };
+    }
+    case 'updateTokens': {
+      return {
+        ...state,
+        accessToken: action.payload.accessToken,
+        refreshToken: action.payload.refreshToken,
+      };
+    }
+    case 'logout':
+      return initialState;
+    default:
+      throw new Error(`invalid message type:${action.type}`);
+  }
+}
+
+// TODO when doing refactor with Typescript, remove action creators to use dispatch only
+function login(dispatch) {
+  return function (accessToken, refreshToken, rememberMe) {
+    if (accessToken && refreshToken) {
+      setTokensToLocalStorage({
+        accessToken,
+        rememberMe,
+        refreshToken,
+      });
+      dispatch({
+        type: 'login',
+        payload: {
+          accessToken,
+          refreshToken,
+          rememberMe,
+        },
+      });
+    } else {
+      throw new Error('Unable to login at this moment. Please try again later.');
+    }
+  };
+}
+
+function logout(dispatch) {
+  return function () {
+    removeTokensFromLocalStorage();
+    dispatch({type: 'logout'});
+  };
+}
+
+function setAccountData(dispatch) {
+  return function (data) {
+    dispatch({type: 'setAccountData', payload: data});
+  };
+}
+
+function setWizardCompleted(dispatch) {
+  return function (status) {
+    dispatch({type: 'setWizardCompleted', payload: status});
+  };
+}
+
+function updateTokens(dispatch) {
+  return function (accessToken, refreshToken, rememberMe) {
+    setTokensToLocalStorage({
+      accessToken,
+      rememberMe,
+      refreshToken,
+    });
+    dispatch({
+      type: 'updateTokens',
+      payload: {
+        accessToken,
+        refreshToken,
+      },
+    });
+  };
+}
+
+export const {Context, Provider} = createDataContext(
+  loginReducer,
+  {
+    login,
+    logout,
+    setWizardCompleted,
+    setAccountData,
+    updateTokens,
+  },
+  initialState,
+  restoreStateFromLocalStorage
+);
